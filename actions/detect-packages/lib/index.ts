@@ -8,6 +8,7 @@ function main(): void {
   const absPath = path.resolve(basePath)
 
   const entries: { name: string; image_env: string; filters: string[]; test_command: string }[] = []
+  const filters = {} as Record<string, string[]>
 
   for (const dir of fs.readdirSync(absPath, { withFileTypes: true })) {
     if (!dir.isDirectory()) continue
@@ -25,8 +26,10 @@ function main(): void {
       filters: config.filters,
       test_command: config.test_command || 'bun run test',
     })
+    filters[config.name] = config.filters
   }
   core.setOutput('services', JSON.stringify(entries))
+  core.setOutput('filters', JSON.stringify(filters))
 }
 
 main()

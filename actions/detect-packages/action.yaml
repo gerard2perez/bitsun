@@ -10,6 +10,8 @@ inputs:
 outputs:
   services:
     description: JSON matrix
+  filters:
+    description: JSON matrix
 
 runs:
   using: node24
