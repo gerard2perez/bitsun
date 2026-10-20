@@ -22,7 +22,7 @@ runs:
   using: composite
   steps:
     - uses: actions/checkout@v7
-    - uses: ./actions/bun-cache-warm
+    - uses: ./actions/cache-warm
       with:
         bun-version: ${{ inputs.bun-version }}
     - name: Get latest commit message
