@@ -19,17 +19,18 @@ function main(): void {
     const config = YAML.parse(fs.readFileSync(yamlPath, 'utf-8'))
     if (config.disable) continue
 
-    config.filters = [`${basePath}/${dir.name}`, ...(config.filters ?? [])]
+    config.paths = [`${basePath}/${dir.name}/**`, ...(config.paths ?? [])]
     entries.push({
       name: config.name,
       image_env: `${config.name}_image`.toUpperCase(),
-      filters: config.filters,
+      filters: config.paths,
       test_command: config.test_command || 'bun run test',
     })
-    filters[config.name] = config.filters
+    filters[config.name] = config.paths
   }
   core.setOutput('services', JSON.stringify(entries))
   core.setOutput('filters', JSON.stringify(filters))
+  console.log(JSON.stringify(filters, null, 2))
 }
 
 main()
