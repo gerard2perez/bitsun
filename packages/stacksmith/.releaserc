@@ -2,7 +2,17 @@
   "branches": ["main"],
   "initialVersion": "0.0.1",
   "plugins": [
-    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "releaseRules": [
+          { "type": "feat", "scope": "stacksmith", "release": "minor" },
+          { "type": "fix", "scope": "stacksmith", "release": "patch" },
+          { "type": "perf", "scope": "stacksmith", "release": "minor" },
+          { "breaking": true, "scope": "stacksmith", "release": "major" }
+        ]
+      }
+    ],
     "@semantic-release/release-notes-generator",
     "@semantic-release/github"
   ]

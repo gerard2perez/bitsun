@@ -16,6 +16,8 @@ function main(): void {
     if (!fs.existsSync(yamlPath)) continue
 
     const config = YAML.parse(fs.readFileSync(yamlPath, 'utf-8'))
+    if (config.disable) continue
+
     config.filters = [`${basePath}/${dir.name}`, ...(config.filters ?? [])]
     entries.push({
       name: config.name,

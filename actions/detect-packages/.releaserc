@@ -2,7 +2,17 @@
   "branches": ["main"],
   "initialVersion": "0.0.1",
   "plugins": [
-    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "releaseRules": [
+          { "type": "feat", "scope": "detect-packages", "release": "minor" },
+          { "type": "fix", "scope": "detect-packages", "release": "patch" },
+          { "type": "perf", "scope": "detect-packages", "release": "minor" },
+          { "breaking": true, "scope": "detect-packages", "release": "major" }
+        ]
+      }
+    ],
     "@semantic-release/release-notes-generator",
     "@semantic-release/github"
   ]
