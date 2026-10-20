@@ -24,7 +24,7 @@ function main(): void {
       test_command: config.test_command || 'bun run test',
     })
   }
-  core.setOutput('matrix', JSON.stringify(entries))
+  core.setOutput('services', JSON.stringify(entries))
 }
 
 main()
