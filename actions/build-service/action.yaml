@@ -1,0 +1,33 @@
+name: Build Service
+description: Builds a service and pushes the image to the registry
+
+inputs:
+  service-name:
+    description: Name of the service to build
+    required: true
+  filters:
+    description: JSON filters to detect changes
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v7
+
+    - name: Detect changes
+      id: changes
+      uses: dorny/paths-filter@v4
+      with:
+        filters: ${{ inputs.filters }}
+
+    - name: Resolve Image
+      id: image
+      uses: gerard2perez/bitsun/actions/resolve-image@main
+      with:
+        app-name: ${{ inputs.service-name }}
+        changed: ${{ steps.changes.outputs[inputs.service-name] }}
+        registry: ${{ env.REGISTRY }}
+        image-name: ${{ env.IMAGE_NAME }}
+        pr-number: ${{ github.event.pull_request.number }}
+
+    # ... rest unchanged
