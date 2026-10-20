@@ -1,0 +1,65 @@
+name: Resolve Image
+description: Determines image tag and build/release flags based on path changes
+
+inputs:
+  app-name:
+    description: Application name
+    required: true
+  changed:
+    description: Whether the app has changed (true/false)
+    required: true
+  registry:
+    description: Container registry
+    required: true
+  image-name:
+    description: Base image name
+    required: true
+  pr-number:
+    description: Pull request number
+    required: true
+
+outputs:
+  image:
+    description: Full image reference
+    value: ${{ steps.determine.outputs.image }}
+  should-build:
+    description: Whether to build
+    value: ${{ steps.determine.outputs.should_build }}
+  should-release:
+    description: Whether to release
+    value: ${{ steps.determine.outputs.should_release }}
+  release-version:
+    description: Release version string
+    value: ${{ steps.determine.outputs.release_version }}
+
+runs:
+  using: composite
+  steps:
+    - id: determine
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        if [[ "${{ inputs.changed }}" != "true" ]]; then
+          IMAGE="${{ inputs.registry }}/${{ inputs.image-name }}/${{ inputs.app-name }}:latest"
+          SHOULD_BUILD="false"
+          SHOULD_RELEASE="false"
+          RELEASE_VERSION=""
+        else
+          IMAGE="${{ inputs.registry }}/${{ inputs.image-name }}/${{ inputs.app-name }}:e2e-pr-${{ inputs.pr-number }}"
+          SHOULD_BUILD="true"
+          SHOULD_RELEASE="true"
+          RELEASE_VERSION="PR-${{ inputs.pr-number }}"
+        fi
+
+        echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+        echo "should_build=${SHOULD_BUILD}" >> "$GITHUB_OUTPUT"
+        echo "should_release=${SHOULD_RELEASE}" >> "$GITHUB_OUTPUT"
+        echo "release_version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
+
+        echo "Application: ${{ inputs.app-name }}"
+        echo "Changed: ${{ inputs.changed }}"
+        echo "Release version: ${RELEASE_VERSION:-none}"
+        echo "E2E image: ${IMAGE}"
+        echo "Build temporary image: ${SHOULD_BUILD}"
+        echo "Should release: ${SHOULD_RELEASE}"   
