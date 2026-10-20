@@ -1,0 +1,39 @@
+name: Setup Monorepo
+description: Sets up a monorepo environment for testing and building
+
+inputs:
+  bun-version:
+    description: Version of Bun to install
+    required: false
+    default: latest
+
+outputs:
+  services:
+    description: JSON matrix
+    value: ${{ steps.matrix.outputs.services }}
+  filters:
+    description: JSON filters
+    value: ${{ steps.matrix.outputs.filters }}
+  commit_message:
+    description: Latest commit message
+    value: ${{ steps.commit-msg.outputs.message }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v7
+    - uses: ./actions/bun-cache-warm
+      with:
+        bun-version: ${{ inputs.bun-version }}
+    - name: Get latest commit message
+      id: commit-msg
+      shell: bash
+      run: |
+        SHA=$(jq -r '.pull_request.head.sha' "$GITHUB_EVENT_PATH")
+        REPO=$(jq -r '.pull_request.head.repo.full_name' "$GITHUB_EVENT_PATH")
+        MSG=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${REPO}/commits/${SHA}" | jq -r '.commit.message')
+        echo "Latest commit: ${MSG}"
+        echo "message=${MSG}" >> "$GITHUB_OUTPUT"
+    - uses: gerard2perez/bitsun/actions/detect-packages@main
+      id: matrix
