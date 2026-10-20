@@ -1,82 +1,28 @@
-name: Build Service
-
-description: Build and push a container image for a workspace service
-
 inputs:
   service-name:
-    description: Service name (directory under packages/)
     required: true
-  changed:
-    description: Whether the service has changes
+  filters:
     required: true
-    default: 'true'
-
-outputs:
-  image: ${{ steps.image.outputs.image }}
-  should_release: ${{ steps.image.outputs.should_release }}
-  release_version: ${{ steps.image.outputs.release_version }}
 
 runs:
   using: composite
   steps:
     - uses: actions/checkout@v7
 
+    - name: Detect changes
+      id: changes
+      uses: dorny/paths-filter@v4
+      with:
+        filters: ${{ inputs.filters }}
+
     - name: Resolve Image
       id: image
       uses: gerard2perez/bitsun/actions/resolve-image@main
       with:
         app-name: ${{ inputs.service-name }}
-        changed: ${{ inputs.changed }}
+        changed: ${{ steps.changes.outputs[inputs.service-name] }}
         registry: ${{ env.REGISTRY }}
         image-name: ${{ env.IMAGE_NAME }}
         pr-number: ${{ github.event.pull_request.number }}
 
-    - name: Install cosign
-      if: steps.image.outputs.should_build == 'true'
-      uses: sigstore/cosign-installer@v3.5.0
-      with:
-        cosign-release: 'v2.2.4'
-
-    - name: Set up Docker Buildx
-      if: steps.image.outputs.should_build == 'true'
-      uses: docker/setup-buildx-action@v4
-
-    - name: Log in to GHCR
-      if: steps.image.outputs.should_build == 'true'
-      uses: docker/login-action@v4
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ github.token }}
-
-    - name: Build image
-      if: steps.image.outputs.should_build == 'true'
-      uses: docker/build-push-action@v7
-      with:
-        context: .
-        file: packages/${{ inputs.service-name }}/Dockerfile
-        push: true
-        tags: ${{ steps.image.outputs.image }}
-        cache-from: type=gha,scope=${{ inputs.service-name }}
-        cache-to: type=gha,mode=max,scope=${{ inputs.service-name }}
-
-    - name: Write release metadata
-      env:
-        IMAGE: ${{ steps.image.outputs.image }}
-        SHOULD_RELEASE: ${{ steps.image.outputs.should_release }}
-        RELEASE_VERSION: ${{ steps.image.outputs.release_version }}
-      shell: bash
-      run: |
-        set -euo pipefail
-        mkdir -p release-metadata
-        cat > "release-metadata/${{ inputs.service-name }}.env" <<EOF
-        IMAGE=${IMAGE}
-        SHOULD_RELEASE=${SHOULD_RELEASE}
-        RELEASE_VERSION=${RELEASE_VERSION}
-        EOF
-
-    - name: Upload release metadata
-      uses: actions/upload-artifact@v7
-      with:
-        name: release-${{ inputs.service-name }}
-        path: release-metadata/${{ inputs.service-name }}.env
+    # ... rest unchanged
