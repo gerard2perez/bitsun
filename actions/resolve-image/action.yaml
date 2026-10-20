@@ -22,13 +22,13 @@ outputs:
   image:
     description: Full image reference
     value: ${{ steps.determine.outputs.image }}
-  should-build:
+  should_build:
     description: Whether to build
     value: ${{ steps.determine.outputs.should_build }}
-  should-release:
+  should_release:
     description: Whether to release
     value: ${{ steps.determine.outputs.should_release }}
-  release-version:
+  release_version:
     description: Release version string
     value: ${{ steps.determine.outputs.release_version }}
 
