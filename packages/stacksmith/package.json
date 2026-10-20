@@ -1,0 +1,18 @@
+{
+  "name": "@gerard2perez/stacksmith",
+  "version": "0.0.1",
+  "bin": "index.ts",
+  "type": "module",
+  "module": "index.ts",
+  "scripts": {
+    "typecheck": "bun check",
+    "build": "echo 0"
+  },
+  "devDependencies": {
+    "@g2p/cmder": "catalog:stacksmith",
+    "@types/bun": "catalog:shared"
+  },
+  "peerDependencies": {
+    "typescript": "catalog:shared"
+  }
+}

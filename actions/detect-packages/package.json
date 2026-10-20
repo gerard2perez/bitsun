@@ -1,0 +1,21 @@
+{
+  "name": "detect-packages",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "module": "index.ts",
+  "scripts": {
+    "typecheck": "bun check",
+    "build": "bun build lib/index.ts --production --target node --outdir dist --format esm"
+  },
+  "dependencies": {
+    "@actions/core": "catalog:actions",
+    "yaml": "catalog:detect-packages"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:shared"
+  },
+  "peerDependencies": {
+    "typescript": "catalog:shared"
+  }
+}

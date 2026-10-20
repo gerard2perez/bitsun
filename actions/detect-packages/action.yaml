@@ -1,0 +1,16 @@
+name: Detect Packages
+description: Reads packages/ directory and outputs a matrix JSON
+
+inputs:
+  path:
+    description: Directory containing packages
+    required: false
+    default: 'packages'
+
+outputs:
+  matrix:
+    description: JSON matrix
+
+runs:
+  using: node24
+  main: dist/index.js

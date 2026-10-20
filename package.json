@@ -1,0 +1,36 @@
+{
+  "name": "bitsun",
+  "private": true,
+  "workspaces": [
+    "actions/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "module": "index.ts",
+  "publishConfig": {
+    "@gerard2perez:registry": "https://npm.pkg.github.com/"
+  },
+  "scripts": {
+    "typecheck": "bun check"
+  },
+  "devDependencies": {
+    "lefthook": "^2.2.2",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0"
+  },
+  "catalogs": {
+    "shared": {
+      "@types/bun": "^1.4.3",
+      "typescript": "^7"
+    },
+    "stacksmith": {
+      "@g2p/cmder": "github:gerard2perez/cmder"
+    },
+    "actions": {
+      "@actions/core": "^3.0.1"
+    },
+    "detect-packages": {
+      "yaml": "^2.9.1"
+    }
+  }
+}

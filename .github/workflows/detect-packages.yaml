@@ -1,0 +1,26 @@
+name: Detect Packages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - actions/detect-packages/**
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  issues: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/bitsun-bun-publish
+        with:
+          registry-url: 'https://npm.pkg.github.com/'
+          scope: '@gerard2perez'
+          package-dir: actions
+          package: detect-packages
+          publish: false

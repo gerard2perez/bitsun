@@ -1,0 +1,6 @@
+# 2026-10-19
+# force 6
+name: bakery-ejs
+proxy:
+  - /api
+priority: 20

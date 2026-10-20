@@ -1,0 +1,11 @@
+pre-commit:
+  parallel: false
+
+  jobs:
+    - run: bunx oxfmt --write {staged_files} < /dev/null
+      glob: '*.{ts,json,yaml}'
+      stage_fixed: true
+
+    - run: bunx oxlint --fix {staged_files} < /dev/null
+      glob: '*.{ts}'
+      stage_fixed: true

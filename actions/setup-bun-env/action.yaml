@@ -1,0 +1,17 @@
+# 2026-10-18
+# .github/actions/setup-bun-env/action.yaml
+name: Setup Bun Env
+runs:
+  using: composite
+  steps:
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+    - uses: actions/cache@v6
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-bun-
+    - shell: bash
+      run: bun install --frozen-lockfile

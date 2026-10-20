@@ -1,0 +1,81 @@
+name: Bun Publish
+description: Run semantic-release and publish a workspace package
+
+inputs:
+  bun-version:
+    description: Bun version to use
+    required: false
+    default: latest
+  registry-url:
+    description: NPM registry URL
+    required: true
+  scope:
+    description: Package scope
+    required: true
+  package:
+    description: Package name
+    required: true
+  package-dir:
+    description: Directory containing packages
+    required: false
+    default: packages
+  publish:
+    description: Whether to publish after release
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ inputs.bun-version }}
+        registry-url: ${{ inputs.registry-url }}
+        scope: ${{ inputs.scope }}
+
+    - name: Detect changes
+      id: changes
+      uses: dorny/paths-filter@v4
+      with:
+        filters: |
+          changed:
+            - '${{ inputs.package-dir }}/${{ inputs.package }}/**'
+
+    - name: Semantic Release
+      id: semantic
+      if: steps.changes.outputs.changed == 'true'
+      uses: cycjimmy/semantic-release-action@v6
+      with:
+        working_directory: './${{ inputs.package-dir }}/${{ inputs.package }}'
+        tag_format: '${{ inputs.package }}-v${version}'
+        branches: |
+          ['main']
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Install
+      if: steps.semantic.outputs.new_release_published == 'true'
+      shell: bash
+      run: bun ci
+
+    - name: Build
+      if: steps.semantic.outputs.new_release_published == 'true'
+      continue-on-error: true
+      shell: bash
+      run: bun run --filter "${{ inputs.scope }}/${{ inputs.package }}..." build
+
+    - name: Bump version
+      if: steps.semantic.outputs.new_release_published == 'true'
+      shell: bash
+      run: |
+        cd ${{ inputs.package-dir }}/${{ inputs.package }}
+        bun pm version ${{ steps.semantic.outputs.new_release_version }} --no-git-tag-version
+
+    - name: Publish
+      if: steps.semantic.outputs.new_release_published == 'true' && inputs.publish == 'true'
+      shell: bash
+      env:
+        BUN_AUTH_TOKEN: ${{ github.token }}
+      run: |
+        cd ${{ inputs.package-dir }}/${{ inputs.package }}
+        bun publish --access restricted   
