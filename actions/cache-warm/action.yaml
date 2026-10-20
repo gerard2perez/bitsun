@@ -1,12 +1,18 @@
 # 2026-10-18
 # .github/actions/setup-bun-env/action.yaml
 name: Setup Bun Env
+description: Sets up a Bun environment for testing and building
+inputs:
+  bun-version:
+    description: Version of Bun to install
+    required: false
+    default: latest
 runs:
   using: composite
   steps:
     - uses: oven-sh/setup-bun@v2
       with:
-        bun-version: latest
+        bun-version: ${{ inputs.bun-version }}
     - id: cache
       uses: actions/cache@v6
       with:
