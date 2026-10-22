@@ -14,4 +14,4 @@ runs:
         restore-keys: |
           ${{ runner.os }}-bun-
     - shell: bash
-      run: bun install --frozen-lockfile
+      run: bun ci
