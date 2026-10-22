@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// Update 1
+// @bun
 var __create = Object.create;
 var __getProtoOf = Object.getPrototypeOf;
 var __defProp = Object.defineProperty;
@@ -5388,7 +5388,8 @@ function useDockerComposeFile(router, parameters) {
     const dockerService = {
       container_name: serviceUid,
       image,
-      env_file: depends_on,
+      env_file,
+      depends_on,
       networks: [uid],
       restart: "always",
       secrets: release ? [`db-${parameters.env}-password`] : undefined

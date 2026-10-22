@@ -68,7 +68,8 @@ export function useDockerComposeFile(router: TraefikRouter, parameters: AppParam
     const dockerService: Service = {
       container_name: serviceUid,
       image,
-      env_file: depends_on,
+      env_file: env_file,
+      depends_on,
       networks: [uid],
       restart: 'always',
       secrets: release ? [`db-${parameters.env}-password`] : undefined,
