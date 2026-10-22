@@ -7,9 +7,9 @@ const dryRun: string = tag('dryRun', 'd', 'Skip Docker Compose; pass true or fal
 const env: string = tag('env', 'e', 'Environment: local, stage, prod, or e2e') ?? 'local'
 const remoteDomain: string = tag('remoteDomain', 'r', 'Remote service domain') ?? '${STAGE_DOMAIN}'
 const localDomain: string = tag('localDomain', 'l', 'Local service domain') ?? '${DOMAIN}'
-const output: string = tag('output', 'o', 'Set the directory for generated files') ?? './bin'
+const output: string = tag('output', 'o', 'Set the directory for generated files') ?? './'
 const app: string[] = tag('app', 'a', 'App services to run locally (repeatable)') ?? []
-//hello
+
 function isEnvironment(value: string): value is AppParameters['env'] {
   return ['local', 'stage', 'prod', 'e2e'].includes(value)
 }

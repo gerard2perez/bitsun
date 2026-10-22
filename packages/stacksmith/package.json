@@ -1,7 +1,10 @@
 {
   "name": "@gerard2perez/stacksmith",
   "version": "0.0.1",
-  "bin": "bin/ss.js",
+  "bin": {
+    "ss": "bin/ss.js",
+    "stacksmith": "bin/ss.js"
+  },
   "type": "module",
   "module": "index.ts",
   "scripts": {

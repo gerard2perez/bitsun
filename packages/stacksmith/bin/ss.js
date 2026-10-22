@@ -5838,9 +5838,9 @@ var init_legacy = __esm(() => {
   init_infra_service();
 });
 
-// virtual:/@gerard2perez/bitsun/packages/stacksmith/cli/legacy.ts
-var exports_legacy = {};
-__export(exports_legacy, {
+// virtual:/@gerard2perez/bitsun/packages/stacksmith/cli/gen.ts
+var exports_gen = {};
+__export(exports_gen, {
   default: () => legacyCommand
 });
 function isEnvironment(value) {
@@ -5861,7 +5861,7 @@ async function legacyCommand() {
   await runLegacy(parameters, app);
 }
 var name, dryRun, env4, remoteDomain, localDomain, output, app;
-var init_legacy2 = __esm(() => {
+var init_gen = __esm(() => {
   init_parser();
   init_core();
   init_legacy();
@@ -5877,7 +5877,7 @@ var init_legacy2 = __esm(() => {
   env4 = tag("env", "e", "Environment: local, stage, prod, or e2e") ?? "local";
   remoteDomain = tag("remoteDomain", "r", "Remote service domain") ?? "${STAGE_DOMAIN}";
   localDomain = tag("localDomain", "l", "Local service domain") ?? "${DOMAIN}";
-  output = tag("output", "o", "Set the directory for generated files") ?? "./bin";
+  output = tag("output", "o", "Set the directory for generated files") ?? "./";
   app = tag("app", "a", "App services to run locally (repeatable)") ?? [];
 });
 
@@ -5991,9 +5991,9 @@ var init_doit = __esm(() => {
   };
 });
 
-// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/legacy.hp
-var exports_legacy2 = {};
-__export(exports_legacy2, {
+// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/gen.hp
+var exports_gen2 = {};
+__export(exports_gen2, {
   content: () => content3,
   data: () => data3,
   theme: () => theme3
@@ -6002,7 +6002,7 @@ var content3 = `%app% %command% %arguments% {[options]|theme.tag.primary}
   {This creates a beauty help|theme.text}
    %tags%
 `, data3, theme3;
-var init_legacy3 = __esm(() => {
+var init_gen2 = __esm(() => {
   data3 = {
     arg: [],
     tag: [
@@ -6101,7 +6101,7 @@ var init_legacy3 = __esm(() => {
         ]
       }
     ],
-    command: "legacy"
+    command: "gen"
   };
   theme3 = {
     arg: "green",
@@ -6125,7 +6125,7 @@ async function cmder() {
   const commands = [
     "demo",
     "doit",
-    "legacy"
+    "gen"
   ];
   if (!help && !commands.includes(command)) {
     throw new Error(`A command named '${command}' does not exits`);
@@ -6133,10 +6133,10 @@ async function cmder() {
   const originalScope = {
     ["demo"]: async () => Promise.resolve().then(() => (init_demo(), exports_demo)),
     ["doit"]: async () => Promise.resolve().then(() => exports_doit),
-    ["legacy"]: async () => Promise.resolve().then(() => (init_legacy2(), exports_legacy)),
+    ["gen"]: async () => Promise.resolve().then(() => (init_gen(), exports_gen)),
     ["demo.hp"]: async () => Promise.resolve().then(() => (init_demo2(), exports_demo2)),
     ["doit.hp"]: async () => Promise.resolve().then(() => (init_doit(), exports_doit2)),
-    ["legacy.hp"]: async () => Promise.resolve().then(() => (init_legacy3(), exports_legacy2))
+    ["gen.hp"]: async () => Promise.resolve().then(() => (init_gen2(), exports_gen2))
   };
   const cmd = originalScope[help ? `${command}.hp` : command];
   if (!cmd && help) {
