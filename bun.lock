@@ -46,7 +46,7 @@
     },
     "shared": {
       "@types/bun": "^1.4.3",
-      "typescript": "^7",
+      "typescript": "^7.0.2",
     },
     "stacksmith": {
       "@g2p/cmder": "github:gerard2perez/cmder",
@@ -61,7 +61,7 @@
 
     "@actions/io": ["@actions/io@3.0.2", "", {}, "sha512-nRBchcMM+QK1pdjO7/idu86rbJI5YHUKCvKs0KxnSYbVe3F51UfGxuZX4Qy/fWlp6l7gWFwIkrOzN+oUK03kfw=="],
 
-    "@g2p/cmder": ["@g2p/cmder@github:gerard2perez/cmder#f43c7fb", { "dependencies": { "@swc/core": "^1.6.7", "chalk": "^5.3.0", "cli-spinners": "^2.9.2", "log-update": "^6.0.0", "reflect-metadata": "^0.2.1", "yaml": "^2.3.4" }, "bin": { "cdr": "./bin/cmder.js" } }, "gerard2perez-cmder-f43c7fb", "sha512-m0YiGH6heestXwN9aZk8joi4dDW1ywcxc8XGcRSOqRfTm/O+17bshlYsUMsseuD8IUESQy8WdFaJEns+Kek7NA=="],
+    "@g2p/cmder": ["@g2p/cmder@github:gerard2perez/cmder#7ab9dda", { "dependencies": { "@swc/core": "^1.6.7", "chalk": "^5.3.0", "cli-spinners": "^2.9.2", "log-update": "^6.0.0", "reflect-metadata": "^0.2.1", "yaml": "^2.3.4" }, "bin": { "cdr": "./bin/cmder.js" } }, "gerard2perez-cmder-7ab9dda", "sha512-WcKWl/d5Jw5V/I89Ow6SpgzHJ/r3CnP+I8sdFJRiLh7osELcCEc33IyoBExL/aIIjiWwdlEkAP5Han0Xg+YduQ=="],
 
     "@gerard2perez/stacksmith": ["@gerard2perez/stacksmith@workspace:packages/stacksmith"],
 

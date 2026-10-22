@@ -1,5 +1,4 @@
 name: StackSmith
-
 on:
   push:
     branches: [main]
@@ -14,6 +13,7 @@ permissions:
 
 jobs:
   publish:
+    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
