@@ -30,6 +30,7 @@ function main(): void {
   }
   core.setOutput('services', JSON.stringify(entries))
   core.setOutput('filters', JSON.stringify(filters))
+  console.log(JSON.stringify(entries, null, 2))
   console.log(JSON.stringify(filters, null, 2))
 }
 
