@@ -46,7 +46,7 @@ runs:
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ github.token }}
 
     - name: Build temporary E2E image
       if: steps.image.outputs.should_build == 'true'
