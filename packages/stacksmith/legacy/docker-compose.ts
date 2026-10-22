@@ -21,8 +21,8 @@ const secrets = (parameters: AppParameters) =>
 
 export function useDockerComposeFile(router: TraefikRouter, parameters: AppParameters) {
   const release = isRelease(parameters)
+  const isProd = parameters.env === 'prod'
   const { uid, composeFile, envFilePath, composeFilePath, envFileName } = dockerCommons(parameters)
-  console.log({ envFileName })
   const envVariables = router.ENV ?? {}
   Object.assign(envVariables, {
     NODE_TLS_REJECT_UNAUTHORIZED: '0',
@@ -58,11 +58,17 @@ export function useDockerComposeFile(router: TraefikRouter, parameters: AppParam
           },
         }
       : undefined
+
+    const env_file = release ? [envFileName, `.env.${parameters.env}`] : [envFileName]
+    if (isProd) {
+      env_file.unshift('.env.stage-compose')
+      env_file.unshift('.env.stage')
+    }
+
     const dockerService: Service = {
       container_name: serviceUid,
       image,
-      env_file: release ? [envFileName, `.env.${parameters.env}`] : [envFileName],
-      depends_on,
+      env_file: depends_on,
       networks: [uid],
       restart: 'always',
       secrets: release ? [`db-${parameters.env}-password`] : undefined,
