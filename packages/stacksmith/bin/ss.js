@@ -58,7 +58,7 @@ var __esm = (fn, res, err) => () => {
   return res;
 };
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/get-argv.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/get-argv.ts
 function getArgv() {
   if (!argv.length) {
     argv = [...process.argv].splice(2);
@@ -70,7 +70,7 @@ var init_get_argv = __esm(() => {
   argv = [];
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/input.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/input.ts
 function getInput() {
   if (input === undefined) {
     input = "";
@@ -1106,7 +1106,7 @@ var require_Reflect = __commonJS(function() {
   })(Reflect2 || (Reflect2 = {}));
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/parser/mappings.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/parser/mappings.ts
 var parserMap, tagMap, argMap;
 var init_mappings = __esm(() => {
   parserMap = new Map;
@@ -1114,7 +1114,7 @@ var init_mappings = __esm(() => {
   argMap = [];
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/parser/register.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/parser/register.ts
 function RegisterParser(type, parser) {
   parserMap.set(type, parser);
   return parser;
@@ -1125,7 +1125,7 @@ var init_register = __esm(() => {
   import_reflect_metadata = __toESM(require_Reflect(), 1);
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/parsers/incomeParser.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/parsers/incomeParser.ts
 var incomeParser_default;
 var init_incomeParser = __esm(() => {
   init_register();
@@ -1135,7 +1135,7 @@ var init_incomeParser = __esm(() => {
   });
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/parsers/numberParser.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/parsers/numberParser.ts
 var numberParser_default;
 var init_numberParser = __esm(() => {
   init_register();
@@ -1144,16 +1144,16 @@ var init_numberParser = __esm(() => {
   });
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/parsers/booleanParser.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/parsers/booleanParser.ts
 var booleanParser_default;
 var init_booleanParser = __esm(() => {
   init_register();
   booleanParser_default = RegisterParser("boolean", function booleanParser(data) {
-    return data === "true" || data === "-h";
+    return data !== undefined;
   });
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/reactive/ref.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/reactive/ref.ts
 class Ref {
   value;
   constructor(value) {
@@ -1167,7 +1167,7 @@ function isRef(value) {
   return value instanceof Ref;
 }
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/parser/index.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/parser/index.ts
 function SyncTag(tag, type, multiple = false) {
   tagMap.set(tag, { type, multiple });
 }
@@ -1208,7 +1208,7 @@ var init_parser = __esm(() => {
   init_register();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/arg.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/arg.ts
 function arg() {
   const parser = getArgParser();
   return parseArg(getInput(), parser);
@@ -1218,7 +1218,7 @@ var init_arg = __esm(() => {
   init_parser();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/tag.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/tag.ts
 function tag(tag, _alias, _description) {
   const alias = !!_alias && !!_description ? _alias : undefined;
   const description = _description ?? _alias;
@@ -3998,7 +3998,7 @@ var require_cli_spinners = __commonJS(function(exports, module) {
   module.exports = spinners;
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/register-formatter.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/register-formatter.ts
 function RegisterFormatter(fn, name) {
   Formatters.set(name, fn);
 }
@@ -4010,7 +4010,7 @@ var init_register_formatter = __esm(() => {
   Formatters = new Map;
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/autowrap.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/autowrap.ts
 var wordWrap = (size) => new RegExp(`([^\\n]{1,${size}})(\\s|$)`, "g");
 var init_autowrap = __esm(() => {
   init_register_formatter();
@@ -4528,7 +4528,7 @@ var init_source = __esm(() => {
   source_default = chalk;
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/colors.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/colors.ts
 var Color, chalkFns, SolidColors;
 var init_colors = __esm(() => {
   init_source();
@@ -4601,7 +4601,7 @@ var init_colors = __esm(() => {
   }, "rgb");
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/highlight-basename.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/highlight-basename.ts
 import { basename, dirname, posix } from "path";
 function highlightBasename(path, primary = "green", secondary = "white") {
   const secondaryC = source_default[secondary];
@@ -4616,7 +4616,7 @@ var init_highlight_basename = __esm(() => {
   RegisterFormatter(highlightBasename, "highlightBasename");
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/clean-color.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/clean-color.ts
 function cleanColor(input) {
   return typeof input === "string" ? input.replace(expression, "") : input;
 }
@@ -4629,7 +4629,7 @@ var init_clean_color = __esm(() => {
   expression = new RegExp(pattern, "g");
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/currency.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/currency.ts
 var init_currency = __esm(() => {
   init_clean_color();
   init_register_formatter();
@@ -4643,7 +4643,7 @@ var init_currency = __esm(() => {
   }, "currency");
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/terminal/istty.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/terminal/istty.ts
 var utf8, fixtures, isTTYSupported;
 var init_istty = __esm(() => {
   utf8 = /UTF-?8$/i.test(process.env.LC_ALL || process.env.LC_CTYPE || process.env.LANG || "");
@@ -4651,7 +4651,7 @@ var init_istty = __esm(() => {
   isTTYSupported = !process.env.MCE_TEST && (utf8 || fixtures || process.stdout.isTTY);
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/symbols.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/symbols.ts
 var LogSymbols;
 var init_symbols = __esm(() => {
   init_istty();
@@ -4665,7 +4665,7 @@ var init_symbols = __esm(() => {
   })(LogSymbols ||= {});
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/ico.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/ico.ts
 var init_ico = __esm(() => {
   init_symbols();
   init_register_formatter();
@@ -4677,7 +4677,7 @@ var init_ico = __esm(() => {
   }, "ico");
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/padding.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/padding.ts
 var init_padding = __esm(() => {
   init_clean_color();
   init_register_formatter();
@@ -4693,7 +4693,7 @@ var init_padding = __esm(() => {
   }, "padr");
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/index.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/formatters/index.ts
 var init_formatters = __esm(() => {
   init_autowrap();
   init_colors();
@@ -4704,7 +4704,7 @@ var init_formatters = __esm(() => {
   init_register_formatter();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/text-formatter/text-compiler.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/text-formatter/text-compiler.ts
 function templateStringReducer(text, ...values) {
   return text.reduce((message, part, index) => {
     return `${message}${part}${values[index] || ""}`;
@@ -4742,19 +4742,19 @@ var init_text_compiler = __esm(() => {
   BRAKED_E = String.fromCharCode(2);
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/spinner/tick-compiler/random-number.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/spinner/tick-compiler/random-number.ts
 function randomNumber(min, max) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/spinner/tick-compiler/random-digits.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/spinner/tick-compiler/random-digits.ts
 function randomDigits(length, to) {
   const number = to > length ? randomNumber(length, to) : Math.round(Math.random() * parseInt("".padStart(length, "9")));
   return `${number}`.padStart(length, "0");
 }
 var init_random_digits = () => {};
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/spinner/tick-compiler/random-letter.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/spinner/tick-compiler/random-letter.ts
 function randomLetter(length) {
   let letters = "";
   while (length--) {
@@ -4764,7 +4764,7 @@ function randomLetter(length) {
 }
 var init_random_letter = () => {};
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/reactive/computed-context.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/reactive/computed-context.ts
 function withContext(context, input) {
   const computedProps = [];
   const functionalProps = [];
@@ -4809,7 +4809,7 @@ function withContext(context, input) {
 }
 var init_computed_context = () => {};
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/spinner/spinner.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/spinner/spinner.ts
 function spinner(spinnerContext, template, spinnerKind = "dots") {
   const { interval, frames } = import_cli_spinners.default[spinnerKind];
   const { frame: preFrame } = withContext(spinnerContext, template);
@@ -4844,7 +4844,7 @@ var init_spinner = __esm(() => {
   import_cli_spinners = __toESM(require_cli_spinners(), 1);
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/readline/create-interface/on-input-data.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/readline/create-interface/on-input-data.ts
 var KEYS;
 var init_on_input_data = __esm(() => {
   KEYS = {
@@ -4857,23 +4857,23 @@ var init_on_input_data = __esm(() => {
   };
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/readline/readline-plus-plus/handlers.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/readline/readline-plus-plus/handlers.ts
 var init_handlers = __esm(() => {
   init_on_input_data();
   init_spinner();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/readline/create-interface/create-interface-plus-plus.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/readline/create-interface/create-interface-plus-plus.ts
 var init_create_interface_plus_plus = __esm(() => {
   init_on_input_data();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/readline/readline-plus-plus/status-manager.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/readline/readline-plus-plus/status-manager.ts
 var init_status_manager = __esm(() => {
   init_spinner();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/readline/readline-plus-plus/readline-plus-plus.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/readline/readline-plus-plus/readline-plus-plus.ts
 var init_readline_plus_plus = __esm(() => {
   init_computed_context();
   init_create_interface_plus_plus();
@@ -4881,37 +4881,37 @@ var init_readline_plus_plus = __esm(() => {
   init_text_compiler();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/readline/question.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/readline/question.ts
 var init_question = __esm(() => {
   init_handlers();
   init_readline_plus_plus();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/readline/bullets/vite-bullets.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/readline/bullets/vite-bullets.ts
 var init_vite_bullets = __esm(() => {
   init_formatters();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/readline/question-choice.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/readline/question-choice.ts
 var init_question_choice = __esm(() => {
   init_vite_bullets();
   init_readline_plus_plus();
   init_handlers();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/readline/yes-no-question.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/readline/yes-no-question.ts
 var init_yes_no_question = __esm(() => {
   init_handlers();
   init_readline_plus_plus();
 });
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/terminal/wizard.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/terminal/wizard.ts
 var init_wizard = __esm(() => {
   init_computed_context();
   init_spinner();
   init_text_compiler();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/help-renderer.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/help-renderer.ts
 function renderArg({ name, multiple }, { theme }) {
   return multiple ? "..." + name : `<{${name}|${theme.arg}}>`;
 }
@@ -6123,7 +6123,7 @@ var init_gen2 = __esm(() => {
   };
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/cmder.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/cmder.ts
 async function cmder() {
   if (process.env.SUB_MODULES && !command && !help) {
     throw new Error(" A command is required");
@@ -6169,7 +6169,7 @@ var init_cmder = __esm(() => {
   command = arg();
 });
 
-// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+7ab9dda/node_modules/@g2p/cmder/lib/core/index.ts
+// ../../node_modules/.bun/@g2p+cmder@github+gerard2perez+cmder+5878881/node_modules/@g2p/cmder/lib/core/index.ts
 var init_core = __esm(() => {
   init_input();
   init_incomeParser();
