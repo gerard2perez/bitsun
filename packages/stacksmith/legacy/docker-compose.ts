@@ -35,6 +35,7 @@ export function useDockerComposeFile(router: TraefikRouter, parameters: AppParam
     secrets: secrets(parameters),
     networks: {
       [uid]: {
+        name: uid,
         driver: 'bridge',
       },
     },
