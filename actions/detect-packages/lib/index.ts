@@ -22,7 +22,7 @@ function main(): void {
     config.paths = [`${basePath}/${dir.name}/**`, ...(config.paths ?? [])]
     entries.push({
       name: config.name,
-      image_env: `${config.name}_image`.toUpperCase(),
+      image_env: `${config.name}_image`.toUpperCase().replace('-', '_'),
       filters: config.paths,
       test_command: config.test_command || 'bun run test',
     })
