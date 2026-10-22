@@ -53,11 +53,11 @@ runs:
       uses: docker/build-push-action@v7
       with:
         context: .
-        file: packages/${{ matrix.application.name }}/Dockerfile
+        file: packages/${{ inputs.service-name }}/Dockerfile
         push: true
         tags: ${{ steps.image.outputs.image }}
-        cache-from: type=gha,scope=${{ matrix.application.name }}
-        cache-to: type=gha,mode=max,scope=${{ matrix.application.name }}
+        cache-from: type=gha,scope=${{ inputs.service-name }}
+        cache-to: type=gha,mode=max,scope=${{ inputs.service-name }}
 
     - name: Write release metadata
       env:
@@ -70,7 +70,7 @@ runs:
 
         mkdir -p release-metadata
 
-        cat > "release-metadata/${{ matrix.application.name }}.env" <<EOF
+        cat > "release-metadata/${{ inputs.service-name }}.env" <<EOF
         IMAGE=${IMAGE}
         SHOULD_RELEASE=${SHOULD_RELEASE}
         RELEASE_VERSION=${RELEASE_VERSION}
@@ -79,5 +79,5 @@ runs:
     - name: Upload release metadata
       uses: actions/upload-artifact@v7
       with:
-        name: release-${{ matrix.application.name }}
-        path: release-metadata/${{ matrix.application.name }}.env
+        name: release-${{ inputs.service-name }}
+        path: release-metadata/${{ inputs.service-name }}.env
