@@ -1,0 +1,26 @@
+# 2026-10-18
+# .github/actions/setup-bun-env/action.yaml
+name: Setup Bun Env
+description: Sets up a monorepo environment for testing and building
+
+inputs:
+  bun-version:
+    description: Version of Bun to install
+    required: false
+    default: latest
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v7
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ inputs.bun-version }}
+    - uses: actions/cache@v6
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-bun-
+    - shell: bash
+      run: bun ci
