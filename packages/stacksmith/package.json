@@ -9,7 +9,7 @@
   "module": "index.ts",
   "scripts": {
     "typecheck": "bun check",
-    "build": "echo 0"
+    "build": "cdr build ss -o ./bin"
   },
   "devDependencies": {
     "@g2p/cmder": "catalog:stacksmith",

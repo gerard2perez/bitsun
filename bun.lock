@@ -27,7 +27,10 @@
     "packages/stacksmith": {
       "name": "@gerard2perez/stacksmith",
       "version": "0.0.1",
-      "bin": "index.ts",
+      "bin": {
+        "ss": "bin/ss.js",
+        "stacksmith": "bin/ss.js",
+      },
       "devDependencies": {
         "@g2p/cmder": "catalog:stacksmith",
         "@types/bun": "catalog:shared",

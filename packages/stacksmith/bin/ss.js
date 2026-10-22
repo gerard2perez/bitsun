@@ -5345,8 +5345,8 @@ function isStage(parameters) {
 // legacy/docker-compose.ts
 function useDockerComposeFile(router, parameters) {
   const release = isRelease(parameters);
+  const isProd = parameters.env === "prod";
   const { uid, composeFile, envFilePath, composeFilePath, envFileName } = dockerCommons(parameters);
-  console.log({ envFileName });
   const envVariables = router.ENV ?? {};
   Object.assign(envVariables, {
     NODE_TLS_REJECT_UNAUTHORIZED: "0"
@@ -5379,11 +5379,15 @@ function useDockerComposeFile(router, parameters) {
         condition: "service_started"
       }
     } : undefined;
+    const env_file = release ? [envFileName, `.env.${parameters.env}`] : [envFileName];
+    if (isProd) {
+      env_file.unshift(".env.stage-compose");
+      env_file.unshift(".env.stage");
+    }
     const dockerService = {
       container_name: serviceUid,
       image,
-      env_file: release ? [envFileName, `.env.${parameters.env}`] : [envFileName],
-      depends_on,
+      env_file: depends_on,
       networks: [uid],
       restart: "always",
       secrets: release ? [`db-${parameters.env}-password`] : undefined
