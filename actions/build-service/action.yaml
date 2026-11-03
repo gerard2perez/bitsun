@@ -58,6 +58,8 @@ runs:
         tags: ${{ steps.image.outputs.image }}
         cache-from: type=gha,scope=${{ inputs.service-name }}
         cache-to: type=gha,mode=max,scope=${{ inputs.service-name }}
+        secret-envs: |
+          GH_TOKEN=GH_TOKEN
 
     - name: Write release metadata
       env:
