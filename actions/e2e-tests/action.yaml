@@ -68,7 +68,7 @@ runs:
     - name: Install dependencies and Playwright browsers
       shell: bash
       run: |
-        bun install --frozen-lockfile
+        bun ci
         bunx playwright install --with-deps
 
     - name: Save Playwright browsers
