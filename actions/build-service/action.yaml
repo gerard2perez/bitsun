@@ -48,6 +48,13 @@ runs:
         username: ${{ github.actor }}
         password: ${{ github.token }}
 
+    - name: Generate Dockerfile
+      if: steps.image.outputs.should_build == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        bunx stacksmith dockerfile
+
     - name: Build temporary E2E image
       if: steps.image.outputs.should_build == 'true'
       uses: docker/build-push-action@v7
