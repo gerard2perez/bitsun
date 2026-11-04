@@ -13,6 +13,8 @@ declare global {
     dockerCompose?: any
     dockerFile?: string
     envConfig?: Record<string, string>
+    family?: 'ejs' | 'nuxt'
+    paths?: string[]
     path: string
     _self_prod?: any
     _self_stage?: any
@@ -30,7 +32,7 @@ declare global {
 export async function* serviceExplorer(parameters: AppParameters) {
   let CURRENT_PORT = 4000
   for await (const file of glob.scan('.')) {
-    const { name: serviceName, proxy = [], priority = 10, disable } = await loadFile(file)
+    const { name: serviceName, proxy = [], priority = 10, disable, family, paths } = await loadFile(file)
     if (disable) continue
 
     const rules: string[] =
@@ -60,6 +62,8 @@ export async function* serviceExplorer(parameters: AppParameters) {
       },
       envConfig,
       dockerFile: dockerCompose ? join(dirname(file), 'docker-compose.yaml') : undefined,
+      family,
+      paths,
       path: resolve(dirname(file)),
     } as ParsedService
   }

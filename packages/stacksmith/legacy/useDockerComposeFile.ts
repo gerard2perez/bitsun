@@ -26,6 +26,7 @@ export function useDockerComposeFile(router: TraefikRouter, parameters: AppParam
   const envVariables = router.ENV ?? {}
   Object.assign(envVariables, {
     NODE_TLS_REJECT_UNAUTHORIZED: '0',
+    NODE_ENV: isProd ? 'production' : 'development',
   })
   const dockerComposeFile = composeFile({
     services: {

@@ -5024,6 +5024,179 @@ var init_demo = __esm(() => {
   }, 10);
 });
 
+// legacy/loadFile.ts
+var Bun2 =globalThis.Bun;
+import { resolve } from "path";
+var loadFile = async (file2) => {
+  try {
+    if (file2.includes(".env")) {
+      return Object.fromEntries((await Bun2.file(resolve(import.meta.dir, file2)).text()).split(/\r?\n/).filter((line) => line.trim() && !line.trim().startsWith("#")).map((line) => {
+        const index = line.indexOf("=");
+        return [line.slice(0, index).trim(), line.slice(index + 1).trim()];
+      }).filter(([key]) => key));
+    } else if (file2.includes("yaml")) {
+      return import.meta.require(resolvePath(file2));
+    } else if (file2.includes(".json")) {
+      return import(resolvePath(file2));
+    }
+    const content = await Bun2.file(resolvePath(file2)).text();
+    const env = Object.fromEntries(content.split(/\r?\n/).filter((line) => line.trim() && !line.trim().startsWith("#")).map((line) => {
+      const index = line.indexOf("=");
+      const key = line.slice(0, index).trim();
+      let value = line.slice(index + 1).trim();
+      if (value.startsWith('"') && value.endsWith('"') || value.startsWith("'") && value.endsWith("'")) {
+        value = value.slice(1, -1);
+      }
+      return [key, value];
+    }));
+    return env;
+  } catch (error) {
+    return {};
+  }
+};
+var init_loadFile = __esm(() => {
+  init_serviceExplorer();
+});
+
+// legacy/serviceExplorer.ts
+var {Glob } = globalThis.Bun;
+import { dirname as dirname2, resolve as resolve2, join } from "path";
+async function* serviceExplorer(parameters) {
+  let CURRENT_PORT = 4000;
+  for await (const file of glob.scan(".")) {
+    const { name: serviceName, proxy = [], priority = 10, disable, family, paths } = await loadFile(file);
+    if (disable)
+      continue;
+    const rules = proxy?.map((rPath) => !rPath.includes("^") ? `PathPrefix(\`${rPath}\`)` : `!PathPrefix(\`${rPath.substring(1)}\`)`) ?? [];
+    rules.unshift("Host(`" + parameters.localDomain + "`)");
+    const dockerComposeFile = resolve2(dirname2(file), "docker-compose.yaml");
+    const dockerCompose = await loadFile(dockerComposeFile).catch(() => null);
+    const packagePath = (filename) => resolve2(dirname2(file), filename);
+    const baseEnv = await loadFile(packagePath(".env"));
+    const envEnv = await loadFile(packagePath(`.env.${parameters.env}`));
+    const envConfig = Object.assign(baseEnv, envEnv);
+    const { _self_prod, _self_stage, ...services } = dockerCompose?.services ?? {};
+    const PORT = Number(envConfig.PORT) || CURRENT_PORT++;
+    delete envConfig.PORT;
+    yield {
+      name: serviceName,
+      priority,
+      rules,
+      PORT,
+      _self_prod,
+      _self_stage,
+      dockerCompose: {
+        ...dockerCompose,
+        services
+      },
+      envConfig,
+      dockerFile: dockerCompose ? join(dirname2(file), "docker-compose.yaml") : undefined,
+      family,
+      paths,
+      path: resolve2(dirname2(file))
+    };
+  }
+}
+var glob, resolvePath = (file) => resolve2(process.cwd(), file);
+var init_serviceExplorer = __esm(() => {
+  init_loadFile();
+  glob = new Glob(`./packages/**/service.yaml`);
+});
+
+// virtual:/@gerard2perez/bitsun/packages/stacksmith/cli/dockerfile.ts
+var exports_dockerfile = {};
+__export(exports_dockerfile, {
+  default: () => generateDockerfiles
+});
+import { basename as basename2, isAbsolute, relative, resolve as resolve3, sep } from "path";
+function packagePath(value, root, appDirectory) {
+  if (isAbsolute(value)) {
+    throw new Error(`Service path "${value}" must be relative to the repository.`);
+  }
+  const segments = value.split(/[\\/]/);
+  const globIndex = segments.findIndex((segment) => /[*?[\]{}]/.test(segment));
+  const path = (globIndex < 0 ? segments : segments.slice(0, globIndex)).join("/");
+  if (!path) {
+    throw new Error(`Service path "${value}" must include a directory before its glob pattern.`);
+  }
+  const resolvedPath = path.startsWith("packages/") || path.startsWith("./packages/") ? resolve3(root, path) : path.startsWith(".") || path.startsWith("..") ? resolve3(appDirectory, path) : resolve3(root, "packages", path);
+  const relativePath = relative(root, resolvedPath);
+  if (!relativePath || relativePath === ".." || relativePath.startsWith(`..${sep}`)) {
+    throw new Error(`Service path "${value}" must refer to a workspace package inside the repository.`);
+  }
+  return relativePath.replaceAll("\\", "/");
+}
+function renderDockerfile(appPath, dependencyPaths, family) {
+  const packagePaths = [appPath, ...dependencyPaths];
+  const manifestCopies = packagePaths.map((path) => `COPY ${path}/package.json ./${path}/package.json`).join(`
+`);
+  const directoryCopies = packagePaths.map((path) => `COPY ${path}/ ./${path}/`).join(`
+`);
+  const nodeModulesCopy = family === "ejs" ? `COPY --from=builder /app/node_modules /app/node_modules
+` : "";
+  return `# ---------- Stage 1: Build ----------
+FROM oven/bun:1.4.3-slim AS builder
+
+ENV LEFTHOOK=0
+ENV CI=true
+
+WORKDIR /app
+
+COPY package.json bun.lock .npmrc ./
+${manifestCopies}
+
+RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN,required=true bun ci
+
+${directoryCopies}
+
+ENV NODE_ENV=production
+WORKDIR /app/${appPath}
+RUN bun run build
+
+# ---------- Stage 2: Runtime ----------
+FROM ghcr.io/gerard2perez/yesjo-bakery/bun-core:latest
+
+WORKDIR /app
+
+COPY --from=builder /app/${appPath}/.output /app/.output
+COPY --from=builder /app/${appPath}/package.json /app/package.json
+${nodeModulesCopy}
+
+EXPOSE 3000
+CMD ["bun", "start"]
+`;
+}
+async function generateDockerfiles() {
+  const root = process.cwd();
+  const services = [];
+  for await (const service of serviceExplorer({})) {
+    services.push(service);
+  }
+  if (services.length === 0) {
+    throw new Error(`No service.yaml files found under "${resolve3(root, "packages")}".`);
+  }
+  const selected = apps.length ? services.filter((service) => apps.includes(service.name) || apps.includes(basename2(service.path))) : services;
+  const unmatchedApps = apps.filter((app) => !services.some((service) => app === service.name || app === basename2(service.path)));
+  if (unmatchedApps.length > 0) {
+    throw new Error(`Unknown app(s): ${unmatchedApps.join(", ")}.`);
+  }
+  for (const service of selected) {
+    const appDirectory = service.path;
+    const appPath = relative(root, appDirectory).replaceAll("\\", "/");
+    const paths = service.paths ?? [];
+    const dependencyPaths = [...new Set(paths.map((path) => packagePath(path, root, appDirectory)))].filter((path) => path !== appPath);
+    await Bun.write(resolve3(appDirectory, "Dockerfile"), renderDockerfile(appPath, dependencyPaths, service.family));
+  }
+}
+var apps;
+var init_dockerfile = __esm(() => {
+  init_parser();
+  init_core();
+  init_serviceExplorer();
+  SyncTag("apps", "string", true);
+  apps = tag("apps", "a", "Service to generate a Dockerfile for (repeatable)") ?? [];
+});
+
 // virtual:/@gerard2perez/bitsun/packages/stacksmith/cli/doit.ts
 var exports_doit = {};
 __export(exports_doit, {
@@ -5063,7 +5236,7 @@ var init_terminal_color = __esm(() => {
 });
 
 // legacy/start-process.ts
-import { basename as basename2 } from "path";
+import { basename as basename3 } from "path";
 async function prefixLines(_prefix, stream) {
   const color = getColor();
   const prefix = color(_prefix);
@@ -5101,14 +5274,14 @@ async function startProcesses(app, register) {
     }
   });
   register(proc);
-  const prefix = `[${basename2(app.path)}] `;
+  const prefix = `[${basename3(app.path)}] `;
   await Promise.all([prefixLines(prefix, proc.stdout), prefixLines(prefix, proc.stderr), proc.exited]);
 }
 var init_start_process = __esm(() => {
   init_terminal_color();
 });
 
-// legacy/application.ts
+// legacy/useApplication.ts
 function useApplication(applications) {
   const processes = new Set;
   const appProcess = [];
@@ -5142,85 +5315,8 @@ function useApplication(applications) {
   };
   return { untilApps };
 }
-var init_application = __esm(() => {
+var init_useApplication = __esm(() => {
   init_start_process();
-});
-
-// legacy/loadFile.ts
-var Bun2 =globalThis.Bun;
-import { resolve } from "path";
-var loadFile = async (file2) => {
-  try {
-    if (file2.includes(".env")) {
-      return Object.fromEntries((await Bun2.file(resolve(import.meta.dir, file2)).text()).split(/\r?\n/).filter((line) => line.trim() && !line.trim().startsWith("#")).map((line) => {
-        const index = line.indexOf("=");
-        return [line.slice(0, index).trim(), line.slice(index + 1).trim()];
-      }).filter(([key]) => key));
-    } else if (file2.includes("yaml")) {
-      return import.meta.require(resolvePath(file2));
-    } else if (file2.includes(".json")) {
-      return import(resolvePath(file2));
-    }
-    const content = await Bun2.file(resolvePath(file2)).text();
-    const env = Object.fromEntries(content.split(/\r?\n/).filter((line) => line.trim() && !line.trim().startsWith("#")).map((line) => {
-      const index = line.indexOf("=");
-      const key = line.slice(0, index).trim();
-      let value = line.slice(index + 1).trim();
-      if (value.startsWith('"') && value.endsWith('"') || value.startsWith("'") && value.endsWith("'")) {
-        value = value.slice(1, -1);
-      }
-      return [key, value];
-    }));
-    return env;
-  } catch (error) {
-    return {};
-  }
-};
-var init_loadFile = __esm(() => {
-  init_service_explorer();
-});
-
-// legacy/service-explorer.ts
-var {Glob } = globalThis.Bun;
-import { dirname as dirname2, resolve as resolve2, join } from "path";
-async function* serviceExplorer(parameters) {
-  let CURRENT_PORT = 4000;
-  for await (const file of glob.scan(".")) {
-    const { name: serviceName, proxy = [], priority = 10, disable } = await loadFile(file);
-    if (disable)
-      continue;
-    const rules = proxy?.map((rPath) => !rPath.includes("^") ? `PathPrefix(\`${rPath}\`)` : `!PathPrefix(\`${rPath.substring(1)}\`)`) ?? [];
-    rules.unshift("Host(`" + parameters.localDomain + "`)");
-    const dockerComposeFile = resolve2(dirname2(file), "docker-compose.yaml");
-    const dockerCompose = await loadFile(dockerComposeFile).catch(() => null);
-    const packagePath = (filename) => resolve2(dirname2(file), filename);
-    const baseEnv = await loadFile(packagePath(".env"));
-    const envEnv = await loadFile(packagePath(`.env.${parameters.env}`));
-    const envConfig = Object.assign(baseEnv, envEnv);
-    const { _self_prod, _self_stage, ...services } = dockerCompose?.services ?? {};
-    const PORT = Number(envConfig.PORT) || CURRENT_PORT++;
-    delete envConfig.PORT;
-    yield {
-      name: serviceName,
-      priority,
-      rules,
-      PORT,
-      _self_prod,
-      _self_stage,
-      dockerCompose: {
-        ...dockerCompose,
-        services
-      },
-      envConfig,
-      dockerFile: dockerCompose ? join(dirname2(file), "docker-compose.yaml") : undefined,
-      path: resolve2(dirname2(file))
-    };
-  }
-}
-var glob, resolvePath = (file) => resolve2(process.cwd(), file);
-var init_service_explorer = __esm(() => {
-  init_loadFile();
-  glob = new Glob(`./packages/**/service.yaml`);
 });
 
 // legacy/render-files.ts
@@ -5343,14 +5439,15 @@ function isStage(parameters) {
   return parameters.env === "stage";
 }
 
-// legacy/docker-compose.ts
+// legacy/useDockerComposeFile.ts
 function useDockerComposeFile(router, parameters) {
   const release = isRelease(parameters);
   const isProd = parameters.env === "prod";
   const { uid, composeFile, envFilePath, composeFilePath, envFileName } = dockerCommons(parameters);
   const envVariables = router.ENV ?? {};
   Object.assign(envVariables, {
-    NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    NODE_TLS_REJECT_UNAUTHORIZED: "0",
+    NODE_ENV: isProd ? "production" : "development"
   });
   const dockerComposeFile = composeFile({
     services: {
@@ -5360,6 +5457,7 @@ function useDockerComposeFile(router, parameters) {
     secrets: secrets(parameters),
     networks: {
       [uid]: {
+        name: uid,
         driver: "bridge"
       }
     }
@@ -5439,7 +5537,7 @@ var secrets = (parameters) => ({
   e2e: undefined,
   local: undefined
 })[parameters.env];
-var init_docker_compose = __esm(() => {
+var init_useDockerComposeFile = __esm(() => {
   init_composer();
   init_docker();
 });
@@ -5590,7 +5688,7 @@ class InfraService {
 }
 var init_infra_service = () => {};
 
-// legacy/use-traefik-router.ts
+// legacy/useTraefikRouter.ts
 function useTraefikRouter(localServices, parameters) {
   const isReleaseEnv = isRelease(parameters);
   const stage = isStage(parameters);
@@ -5696,7 +5794,7 @@ function useTraefikRouter(localServices, parameters) {
     }
   };
 }
-var init_use_traefik_router = __esm(() => {
+var init_useTraefikRouter = __esm(() => {
   init_traefik();
   init_infra_service();
   init_get_filename();
@@ -5833,11 +5931,11 @@ async function runLegacy(parameters, apps) {
   }
 }
 var init_legacy = __esm(() => {
-  init_application();
+  init_useApplication();
   init_terminal_color();
-  init_service_explorer();
-  init_docker_compose();
-  init_use_traefik_router();
+  init_serviceExplorer();
+  init_useDockerComposeFile();
+  init_useTraefikRouter();
   init_postgres();
   init_valkey();
   init_reports();
@@ -5966,9 +6064,9 @@ var init_demo2 = __esm(() => {
   };
 });
 
-// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/doit.hp
-var exports_doit2 = {};
-__export(exports_doit2, {
+// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/dockerfile.hp
+var exports_dockerfile2 = {};
+__export(exports_dockerfile2, {
   content: () => content2,
   data: () => data2,
   theme: () => theme2
@@ -5977,13 +6075,58 @@ var content2 = `%app% %command% %arguments% {[options]|theme.tag.primary}
   {This creates a beauty help|theme.text}
    %tags%
 `, data2, theme2;
-var init_doit = __esm(() => {
+var init_dockerfile2 = __esm(() => {
   data2 = {
+    arg: [],
+    tag: [
+      {
+        type: "string",
+        multiple: true,
+        compact: false,
+        name: "apps",
+        alias: "a",
+        description: "Service to generate a Dockerfile for (repeatable)",
+        args: [
+          "apps",
+          "a",
+          "Service to generate a Dockerfile for (repeatable)"
+        ]
+      }
+    ],
+    command: "dockerfile"
+  };
+  theme2 = {
+    arg: "green",
+    text: "white",
+    command: {
+      primary: "yellow",
+      secondary: "yellow"
+    },
+    tag: {
+      primary: "cyan",
+      secondary: "gray"
+    }
+  };
+});
+
+// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/doit.hp
+var exports_doit2 = {};
+__export(exports_doit2, {
+  content: () => content3,
+  data: () => data3,
+  theme: () => theme3
+});
+var content3 = `%app% %command% %arguments% {[options]|theme.tag.primary}
+  {This creates a beauty help|theme.text}
+   %tags%
+`, data3, theme3;
+var init_doit = __esm(() => {
+  data3 = {
     arg: [],
     tag: [],
     command: "doit"
   };
-  theme2 = {
+  theme3 = {
     arg: "green",
     text: "white",
     command: {
@@ -6000,16 +6143,16 @@ var init_doit = __esm(() => {
 // help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/gen.hp
 var exports_gen2 = {};
 __export(exports_gen2, {
-  content: () => content3,
-  data: () => data3,
-  theme: () => theme3
+  content: () => content4,
+  data: () => data4,
+  theme: () => theme4
 });
-var content3 = `%app% %command% %arguments% {[options]|theme.tag.primary}
+var content4 = `%app% %command% %arguments% {[options]|theme.tag.primary}
   {This creates a beauty help|theme.text}
    %tags%
-`, data3, theme3;
+`, data4, theme4;
 var init_gen2 = __esm(() => {
-  data3 = {
+  data4 = {
     arg: [],
     tag: [
       {
@@ -6109,7 +6252,7 @@ var init_gen2 = __esm(() => {
     ],
     command: "gen"
   };
-  theme3 = {
+  theme4 = {
     arg: "green",
     text: "white",
     command: {
@@ -6130,6 +6273,7 @@ async function cmder() {
   }
   const commands = [
     "demo",
+    "dockerfile",
     "doit",
     "gen"
   ];
@@ -6138,9 +6282,11 @@ async function cmder() {
   }
   const originalScope = {
     ["demo"]: async () => Promise.resolve().then(() => (init_demo(), exports_demo)),
+    ["dockerfile"]: async () => Promise.resolve().then(() => (init_dockerfile(), exports_dockerfile)),
     ["doit"]: async () => Promise.resolve().then(() => exports_doit),
     ["gen"]: async () => Promise.resolve().then(() => (init_gen(), exports_gen)),
     ["demo.hp"]: async () => Promise.resolve().then(() => (init_demo2(), exports_demo2)),
+    ["dockerfile.hp"]: async () => Promise.resolve().then(() => (init_dockerfile2(), exports_dockerfile2)),
     ["doit.hp"]: async () => Promise.resolve().then(() => (init_doit(), exports_doit2)),
     ["gen.hp"]: async () => Promise.resolve().then(() => (init_gen2(), exports_gen2))
   };

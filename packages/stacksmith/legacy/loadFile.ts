@@ -1,5 +1,5 @@
 import * as Bun from 'bun'
-import { resolvePath } from './service-explorer'
+import { resolvePath } from './serviceExplorer'
 import { resolve } from 'node:path'
 
 export const loadFile = async (file: string) => {
