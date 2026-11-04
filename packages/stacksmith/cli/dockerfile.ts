@@ -3,6 +3,7 @@ import { serviceExplorer } from '../legacy/serviceExplorer'
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path'
 
 const apps: string[] = tag('apps', 'a', 'Service to generate a Dockerfile for') ?? []
+const defaultRuntimeImage = 'ghcr.io/gerard2perez/yesjo-bakery/bun-core:latest'
 
 function packagePath(value: string, root: string, appDirectory: string): string {
   if (isAbsolute(value)) {
@@ -32,7 +33,39 @@ function packagePath(value: string, root: string, appDirectory: string): string 
   return relativePath.replaceAll('\\', '/')
 }
 
-function renderDockerfile(appPath: string, dependencyPaths: string[]): string {
+function runtimeImageFromDockerfile(contents: string, dockerfilePath: string): string {
+  let runtimeImage: string | undefined
+
+  for (const line of contents.split(/\r?\n/)) {
+    const tokens = line.trim().split(/\s+/)
+    if (tokens[0]?.toUpperCase() !== 'FROM') continue
+
+    let imageIndex = 1
+    while (tokens[imageIndex]?.startsWith('--')) imageIndex++
+
+    const image = tokens[imageIndex]
+    if (!image || image.toUpperCase() === 'AS') {
+      throw new Error(`Invalid FROM instruction in "${dockerfilePath}": ${line}`)
+    }
+
+    runtimeImage = image
+  }
+
+  if (!runtimeImage) {
+    throw new Error(`No FROM instruction found in "${dockerfilePath}".`)
+  }
+
+  return runtimeImage
+}
+
+async function getRuntimeImage(dockerfilePath: string): Promise<string> {
+  const dockerfile = Bun.file(dockerfilePath)
+  return (await dockerfile.exists())
+    ? runtimeImageFromDockerfile(await dockerfile.text(), dockerfilePath)
+    : defaultRuntimeImage
+}
+
+function renderDockerfile(appPath: string, dependencyPaths: string[], runtimeImage: string): string {
   const packagePaths = [appPath, ...dependencyPaths]
   const manifestCopies = packagePaths.map(path => `COPY ${path}/package.json ./${path}/package.json`).join('\n')
   const directoryCopies = packagePaths.map(path => `COPY ${path}/ ./${path}/`).join('\n')
@@ -57,7 +90,7 @@ WORKDIR /app/${appPath}
 RUN bun run build
 
 # ---------- Stage 2: Runtime ----------
-FROM ghcr.io/gerard2perez/yesjo-bakery/bun-core:latest
+FROM ${runtimeImage}
 
 WORKDIR /app
 
@@ -101,6 +134,8 @@ export default async function generateDockerfiles() {
       path => path !== appPath
     )
 
-    await Bun.write(resolve(appDirectory, 'Dockerfile'), renderDockerfile(appPath, dependencyPaths))
+    const dockerfilePath = resolve(appDirectory, 'Dockerfile')
+    const runtimeImage = await getRuntimeImage(dockerfilePath)
+    await Bun.write(dockerfilePath, renderDockerfile(appPath, dependencyPaths, runtimeImage))
   }
 }

@@ -20,10 +20,9 @@ runs:
         restore-keys: |
           ${{ runner.os }}-playwright-
 
-    - name: Install dependencies and Playwright browsers
+    - name: Install Playwright browsers and system dependencies
       shell: bash
       run: |
-        bun ci
         bunx playwright install --with-deps
 
     - name: Save Playwright browsers
