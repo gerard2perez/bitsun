@@ -1,9 +1,8 @@
 import { tag } from '@g2p/cmder'
-import type { AppParameters } from '../legacy/parse-args'
 import { serviceExplorer } from '../legacy/serviceExplorer'
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path'
 
-const apps: string[] = tag('apps', 'a', 'Service to generate a Dockerfile for (repeatable)') ?? []
+const apps: string[] = tag('apps', 'a', 'Service to generate a Dockerfile for') ?? []
 
 function packagePath(value: string, root: string, appDirectory: string): string {
   if (isAbsolute(value)) {
@@ -33,11 +32,10 @@ function packagePath(value: string, root: string, appDirectory: string): string 
   return relativePath.replaceAll('\\', '/')
 }
 
-function renderDockerfile(appPath: string, dependencyPaths: string[], family?: ParsedService['family']): string {
+function renderDockerfile(appPath: string, dependencyPaths: string[]): string {
   const packagePaths = [appPath, ...dependencyPaths]
   const manifestCopies = packagePaths.map(path => `COPY ${path}/package.json ./${path}/package.json`).join('\n')
   const directoryCopies = packagePaths.map(path => `COPY ${path}/ ./${path}/`).join('\n')
-  const nodeModulesCopy = family === 'ejs' ? 'COPY --from=builder /app/node_modules /app/node_modules\n' : ''
 
   return `# ---------- Stage 1: Build ----------
 FROM oven/bun:1.4.3-slim AS builder
@@ -63,9 +61,9 @@ FROM ghcr.io/gerard2perez/yesjo-bakery/bun-core:latest
 
 WORKDIR /app
 
-COPY --from=builder /app/${appPath}/.output /app/.output
-COPY --from=builder /app/${appPath}/package.json /app/package.json
-${nodeModulesCopy}
+COPY --from=builder /app ./
+
+WORKDIR /app/${appPath}
 
 EXPOSE 3000
 CMD ["bun", "start"]
@@ -103,6 +101,6 @@ export default async function generateDockerfiles() {
       path => path !== appPath
     )
 
-    await Bun.write(resolve(appDirectory, 'Dockerfile'), renderDockerfile(appPath, dependencyPaths, service.family))
+    await Bun.write(resolve(appDirectory, 'Dockerfile'), renderDockerfile(appPath, dependencyPaths))
   }
 }
