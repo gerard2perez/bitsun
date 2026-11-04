@@ -1,0 +1,48 @@
+name: E2E Report
+
+description: Run Playwright E2E tests against built services
+
+inputs:
+  vps-host:
+    description: Hostname of the VPS to upload reports
+    required: true
+  vps-user:
+    description: Username for the VPS
+    required: true
+  vps-ssh-key:
+    description: SSH private key for the VPS
+    required: true
+
+outputs:
+  summary:
+    description: Summary of the E2E test results
+    value: ${{ steps.summary.outputs.summary }}
+
+runs:
+  using: composite
+  steps:
+    - name: Upload E2E report
+      if: always()
+      uses: appleboy/scp-action@v1
+      with:
+        host: ${{ inputs.vps-host }}
+        username: ${{ inputs.vps-user }}
+        key: ${{ inputs.vps-ssh-key }}
+        source: 'playwright-report/*'
+        target: '/srv/projects/pw-yesjo/pr-${{ github.event.pull_request.number }}/${{ github.sha }}'
+        strip_components: 1
+
+    - name: Generate PR Report
+      uses: daun/playwright-report-summary@v4
+      if: always()
+      id: summary
+      with:
+        report-file: results.json
+        report-url: 'https://pw.stage.${{ env.HOSTNAME }}/pr-${{ github.event.pull_request.number }}/${{ github.sha }}'
+        test-command: 'npx playwright test'
+        job-summary: true
+        create-comment: true
+
+    - uses: marocchino/sticky-pull-request-comment@v3
+      with:
+        message: ${{ steps.summary.outputs.summary }}
