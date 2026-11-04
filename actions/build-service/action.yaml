@@ -13,7 +13,11 @@ runs:
   using: composite
   steps:
     - uses: gerard2perez/bitsun/actions/setup-env@main
-    - uses: actions/checkout@v7
+
+    - name: Generate Dockerfile
+      shell: bash
+      run: |
+        bunx stacksmith dockerfile
 
     - name: Detect changes
       id: changes
@@ -48,13 +52,6 @@ runs:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ github.token }}
-
-    - name: Generate Dockerfile
-      if: steps.image.outputs.should_build == 'true'
-      shell: bash
-      run: |
-        set -euo pipefail
-        bunx @gerard2perez/stacksmith dockerfile
 
     - name: Build temporary E2E image
       if: steps.image.outputs.should_build == 'true'
