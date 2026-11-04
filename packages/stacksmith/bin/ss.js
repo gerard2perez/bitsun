@@ -1160,9 +1160,6 @@ class Ref {
     this.value = value;
   }
 }
-function ref(n) {
-  return new Ref(n);
-}
 function isRef(value) {
   return value instanceof Ref;
 }
@@ -4988,40 +4985,117 @@ var init_help_renderer = __esm(() => {
   init_text_compiler();
 });
 
-// virtual:/@gerard2perez/bitsun/packages/stacksmith/cli/demo.ts
-var exports_demo = {};
-__export(exports_demo, {
-  default: () => demo_default
-});
-function tic() {
-  return j++;
+// legacy/terminal-color.ts
+function randomInt(a, b) {
+  return Math.floor(Math.random() * (b - a + 1)) + a;
 }
-var age, income, demo, doit, i = 0, AGE = "{digits:1:254}", time, j = 0, demo_default = async () => {
-  const control = spinner({ time, tic }, ` {{frame}|cyan} Karl's
-    "${i}" ${age} ${income} ${demo} :: ${doit ? "true" : "false"} {time}
-    Your lucky number: ${AGE}
-    MY NAME IS {{letters:5}|rgb:{digits:1:254}:{digits:1:254}:{digits:1:254}}
-  {tic|red}
-    `);
-  setTimeout(() => {
-    control.done("Done");
-  }, 30000);
-};
-var init_demo = __esm(() => {
-  init_parser();
-  init_core();
-  SyncArg("number");
-  SyncTag("income", "Income", true);
-  SyncTag("demo", "string", false);
-  SyncTag("doit", "boolean", false);
-  age = arg() ?? 10;
-  income = tag("income", "i", "team member") ?? [];
-  demo = tag("demo", "d", "team member") ?? "she";
-  doit = tag("do", "o", "do something") ?? false;
-  time = ref(10);
-  setTimeout(() => {
-    time.value = 15;
-  }, 10);
+function getColor() {
+  const index = randomInt(0, palette.length - 1);
+  const [entry] = palette.splice(index, 1);
+  const [_, hex] = entry;
+  const color = Bun.color(hex, "ansi");
+  return (text) => `${color}${text}\x1B[0m`;
+}
+var palette;
+var init_terminal_color = __esm(() => {
+  palette = Object.entries({
+    red: "#e6194b",
+    orange: "#f58231",
+    yellow: "#ffe119",
+    lime: "#bfef45",
+    green: "#3cb44b",
+    teal: "#469990",
+    cyan: "#42d4f4",
+    blue: "#4363d8",
+    purple: "#911eb4",
+    magenta: "#f032e6",
+    pink: "#fabed4",
+    brown: "#9a6324"
+  });
+});
+
+// legacy/start-process.ts
+import { basename as basename2 } from "path";
+async function prefixLines(_prefix, stream) {
+  const color = getColor();
+  const prefix = color(_prefix);
+  const reader = stream.getReader();
+  const decoder = new TextDecoder;
+  let buf = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done)
+      break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split(`
+`);
+    buf = lines.pop();
+    for (const line of lines) {
+      process.stdout.write(`${prefix}${line}
+`);
+    }
+  }
+  buf += decoder.decode();
+  if (buf)
+    process.stdout.write(`${prefix}${buf}
+`);
+}
+async function startProcesses(app, register) {
+  const proc = Bun.spawn(["bun", "--env-file=.env", "--env-file=.env.local", "run", "dev"], {
+    cwd: app.path,
+    stdout: "pipe",
+    stderr: "pipe",
+    env: {
+      ...process.env,
+      PORT: `${app.PORT}`,
+      NODE_OPTIONS: "--use-system-ca --max-old-space-size=4096",
+      BK_SERVICE: app.name
+    }
+  });
+  register(proc);
+  const prefix = `[${basename2(app.path)}] `;
+  await Promise.all([prefixLines(prefix, proc.stdout), prefixLines(prefix, proc.stderr), proc.exited]);
+}
+var init_start_process = __esm(() => {
+  init_terminal_color();
+});
+
+// legacy/useApplication.ts
+function useApplication(applications) {
+  const processes = new Set;
+  const appProcess = [];
+  let SIGINTCallback;
+  let shutdownPromise;
+  async function shutdown() {
+    if (shutdownPromise)
+      return shutdownPromise;
+    shutdownPromise = (async () => {
+      console.log("Preparing to close");
+      for (const proc of processes) {
+        try {
+          proc.kill("SIGINT");
+        } catch {}
+      }
+      await Promise.allSettled([...processes].map((proc) => proc.exited));
+      await SIGINTCallback?.();
+    })();
+    return shutdownPromise;
+  }
+  process.on("SIGINT", () => {
+    shutdown().catch(console.error);
+  });
+  for (const app of applications) {
+    appProcess.push(startProcesses(app, (proc) => processes.add(proc)));
+  }
+  const untilApps = async (callback) => {
+    SIGINTCallback = callback;
+    await Promise.race(appProcess).catch(console.error);
+    await shutdown();
+  };
+  return { untilApps };
+}
+var init_useApplication = __esm(() => {
+  init_start_process();
 });
 
 // legacy/loadFile.ts
@@ -5101,222 +5175,6 @@ var glob, resolvePath = (file) => resolve2(process.cwd(), file);
 var init_serviceExplorer = __esm(() => {
   init_loadFile();
   glob = new Glob(`./packages/**/service.yaml`);
-});
-
-// virtual:/@gerard2perez/bitsun/packages/stacksmith/cli/dockerfile.ts
-var exports_dockerfile = {};
-__export(exports_dockerfile, {
-  default: () => generateDockerfiles
-});
-import { basename as basename2, isAbsolute, relative, resolve as resolve3, sep } from "path";
-function packagePath(value, root, appDirectory) {
-  if (isAbsolute(value)) {
-    throw new Error(`Service path "${value}" must be relative to the repository.`);
-  }
-  const segments = value.split(/[\\/]/);
-  const globIndex = segments.findIndex((segment) => /[*?[\]{}]/.test(segment));
-  const path = (globIndex < 0 ? segments : segments.slice(0, globIndex)).join("/");
-  if (!path) {
-    throw new Error(`Service path "${value}" must include a directory before its glob pattern.`);
-  }
-  const resolvedPath = path.startsWith("packages/") || path.startsWith("./packages/") ? resolve3(root, path) : path.startsWith(".") || path.startsWith("..") ? resolve3(appDirectory, path) : resolve3(root, "packages", path);
-  const relativePath = relative(root, resolvedPath);
-  if (!relativePath || relativePath === ".." || relativePath.startsWith(`..${sep}`)) {
-    throw new Error(`Service path "${value}" must refer to a workspace package inside the repository.`);
-  }
-  return relativePath.replaceAll("\\", "/");
-}
-function renderDockerfile(appPath, dependencyPaths, family) {
-  const packagePaths = [appPath, ...dependencyPaths];
-  const manifestCopies = packagePaths.map((path) => `COPY ${path}/package.json ./${path}/package.json`).join(`
-`);
-  const directoryCopies = packagePaths.map((path) => `COPY ${path}/ ./${path}/`).join(`
-`);
-  const nodeModulesCopy = family === "ejs" ? `COPY --from=builder /app/node_modules /app/node_modules
-` : "";
-  return `# ---------- Stage 1: Build ----------
-FROM oven/bun:1.4.3-slim AS builder
-
-ENV LEFTHOOK=0
-ENV CI=true
-
-WORKDIR /app
-
-COPY package.json bun.lock .npmrc ./
-${manifestCopies}
-
-RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN,required=true bun ci
-
-${directoryCopies}
-
-ENV NODE_ENV=production
-WORKDIR /app/${appPath}
-RUN bun run build
-
-# ---------- Stage 2: Runtime ----------
-FROM ghcr.io/gerard2perez/yesjo-bakery/bun-core:latest
-
-WORKDIR /app
-
-COPY --from=builder /app/${appPath}/.output /app/.output
-COPY --from=builder /app/${appPath}/package.json /app/package.json
-${nodeModulesCopy}
-
-EXPOSE 3000
-CMD ["bun", "start"]
-`;
-}
-async function generateDockerfiles() {
-  const root = process.cwd();
-  const services = [];
-  for await (const service of serviceExplorer({})) {
-    services.push(service);
-  }
-  if (services.length === 0) {
-    throw new Error(`No service.yaml files found under "${resolve3(root, "packages")}".`);
-  }
-  const selected = apps.length ? services.filter((service) => apps.includes(service.name) || apps.includes(basename2(service.path))) : services;
-  const unmatchedApps = apps.filter((app) => !services.some((service) => app === service.name || app === basename2(service.path)));
-  if (unmatchedApps.length > 0) {
-    throw new Error(`Unknown app(s): ${unmatchedApps.join(", ")}.`);
-  }
-  for (const service of selected) {
-    const appDirectory = service.path;
-    const appPath = relative(root, appDirectory).replaceAll("\\", "/");
-    const paths = service.paths ?? [];
-    const dependencyPaths = [...new Set(paths.map((path) => packagePath(path, root, appDirectory)))].filter((path) => path !== appPath);
-    await Bun.write(resolve3(appDirectory, "Dockerfile"), renderDockerfile(appPath, dependencyPaths, service.family));
-  }
-}
-var apps;
-var init_dockerfile = __esm(() => {
-  init_parser();
-  init_core();
-  init_serviceExplorer();
-  SyncTag("apps", "string", true);
-  apps = tag("apps", "a", "Service to generate a Dockerfile for (repeatable)") ?? [];
-});
-
-// virtual:/@gerard2perez/bitsun/packages/stacksmith/cli/doit.ts
-var exports_doit = {};
-__export(exports_doit, {
-  default: () => doit_default
-});
-var doit_default = async () => {
-  console.log("do it or not");
-};
-
-// legacy/terminal-color.ts
-function randomInt(a, b) {
-  return Math.floor(Math.random() * (b - a + 1)) + a;
-}
-function getColor() {
-  const index = randomInt(0, palette.length - 1);
-  const [entry] = palette.splice(index, 1);
-  const [_, hex] = entry;
-  const color = Bun.color(hex, "ansi");
-  return (text) => `${color}${text}\x1B[0m`;
-}
-var palette;
-var init_terminal_color = __esm(() => {
-  palette = Object.entries({
-    red: "#e6194b",
-    orange: "#f58231",
-    yellow: "#ffe119",
-    lime: "#bfef45",
-    green: "#3cb44b",
-    teal: "#469990",
-    cyan: "#42d4f4",
-    blue: "#4363d8",
-    purple: "#911eb4",
-    magenta: "#f032e6",
-    pink: "#fabed4",
-    brown: "#9a6324"
-  });
-});
-
-// legacy/start-process.ts
-import { basename as basename3 } from "path";
-async function prefixLines(_prefix, stream) {
-  const color = getColor();
-  const prefix = color(_prefix);
-  const reader = stream.getReader();
-  const decoder = new TextDecoder;
-  let buf = "";
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done)
-      break;
-    buf += decoder.decode(value, { stream: true });
-    const lines = buf.split(`
-`);
-    buf = lines.pop();
-    for (const line of lines) {
-      process.stdout.write(`${prefix}${line}
-`);
-    }
-  }
-  buf += decoder.decode();
-  if (buf)
-    process.stdout.write(`${prefix}${buf}
-`);
-}
-async function startProcesses(app, register) {
-  const proc = Bun.spawn(["bun", "--env-file=.env", "--env-file=.env.local", "run", "dev"], {
-    cwd: app.path,
-    stdout: "pipe",
-    stderr: "pipe",
-    env: {
-      ...process.env,
-      PORT: `${app.PORT}`,
-      NODE_OPTIONS: "--use-system-ca --max-old-space-size=4096",
-      BK_SERVICE: app.name
-    }
-  });
-  register(proc);
-  const prefix = `[${basename3(app.path)}] `;
-  await Promise.all([prefixLines(prefix, proc.stdout), prefixLines(prefix, proc.stderr), proc.exited]);
-}
-var init_start_process = __esm(() => {
-  init_terminal_color();
-});
-
-// legacy/useApplication.ts
-function useApplication(applications) {
-  const processes = new Set;
-  const appProcess = [];
-  let SIGINTCallback;
-  let shutdownPromise;
-  async function shutdown() {
-    if (shutdownPromise)
-      return shutdownPromise;
-    shutdownPromise = (async () => {
-      console.log("Preparing to close");
-      for (const proc of processes) {
-        try {
-          proc.kill("SIGINT");
-        } catch {}
-      }
-      await Promise.allSettled([...processes].map((proc) => proc.exited));
-      await SIGINTCallback?.();
-    })();
-    return shutdownPromise;
-  }
-  process.on("SIGINT", () => {
-    shutdown().catch(console.error);
-  });
-  for (const app of applications) {
-    appProcess.push(startProcesses(app, (proc) => processes.add(proc)));
-  }
-  const untilApps = async (callback) => {
-    SIGINTCallback = callback;
-    await Promise.race(appProcess).catch(console.error);
-    await shutdown();
-  };
-  return { untilApps };
-}
-var init_useApplication = __esm(() => {
-  init_start_process();
 });
 
 // legacy/render-files.ts
@@ -5942,9 +5800,9 @@ var init_legacy = __esm(() => {
   init_infra_service();
 });
 
-// virtual:/@gerard2perez/bitsun/packages/stacksmith/cli/gen.ts
-var exports_gen = {};
-__export(exports_gen, {
+// virtual:/@gerard2perez/bitsun/packages/stacksmith/cli/compose.ts
+var exports_compose = {};
+__export(exports_compose, {
   default: () => legacyCommand
 });
 function isEnvironment(value) {
@@ -5965,7 +5823,7 @@ async function legacyCommand() {
   await runLegacy(parameters, app);
 }
 var name, dryRun, env4, remoteDomain, localDomain, output, app;
-var init_gen = __esm(() => {
+var init_compose = __esm(() => {
   init_parser();
   init_core();
   init_legacy();
@@ -5985,9 +5843,103 @@ var init_gen = __esm(() => {
   app = tag("app", "a", "App services to run locally (repeatable)") ?? [];
 });
 
-// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/demo.hp
-var exports_demo2 = {};
-__export(exports_demo2, {
+// virtual:/@gerard2perez/bitsun/packages/stacksmith/cli/dockerfile.ts
+var exports_dockerfile = {};
+__export(exports_dockerfile, {
+  default: () => generateDockerfiles
+});
+import { basename as basename3, isAbsolute, relative, resolve as resolve3, sep } from "path";
+function packagePath(value, root, appDirectory) {
+  if (isAbsolute(value)) {
+    throw new Error(`Service path "${value}" must be relative to the repository.`);
+  }
+  const segments = value.split(/[\\/]/);
+  const globIndex = segments.findIndex((segment) => /[*?[\]{}]/.test(segment));
+  const path = (globIndex < 0 ? segments : segments.slice(0, globIndex)).join("/");
+  if (!path) {
+    throw new Error(`Service path "${value}" must include a directory before its glob pattern.`);
+  }
+  const resolvedPath = path.startsWith("packages/") || path.startsWith("./packages/") ? resolve3(root, path) : path.startsWith(".") || path.startsWith("..") ? resolve3(appDirectory, path) : resolve3(root, "packages", path);
+  const relativePath = relative(root, resolvedPath);
+  if (!relativePath || relativePath === ".." || relativePath.startsWith(`..${sep}`)) {
+    throw new Error(`Service path "${value}" must refer to a workspace package inside the repository.`);
+  }
+  return relativePath.replaceAll("\\", "/");
+}
+function renderDockerfile(appPath, dependencyPaths, family) {
+  const packagePaths = [appPath, ...dependencyPaths];
+  const manifestCopies = packagePaths.map((path) => `COPY ${path}/package.json ./${path}/package.json`).join(`
+`);
+  const directoryCopies = packagePaths.map((path) => `COPY ${path}/ ./${path}/`).join(`
+`);
+  const nodeModulesCopy = family === "ejs" ? `COPY --from=builder /app/node_modules /app/node_modules
+` : "";
+  return `# ---------- Stage 1: Build ----------
+FROM oven/bun:1.4.3-slim AS builder
+
+ENV LEFTHOOK=0
+ENV CI=true
+
+WORKDIR /app
+
+COPY package.json bun.lock .npmrc ./
+${manifestCopies}
+
+RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN,required=true bun ci
+
+${directoryCopies}
+
+ENV NODE_ENV=production
+WORKDIR /app/${appPath}
+RUN bun run build
+
+# ---------- Stage 2: Runtime ----------
+FROM ghcr.io/gerard2perez/yesjo-bakery/bun-core:latest
+
+WORKDIR /app
+
+COPY --from=builder /app/${appPath}/.output /app/.output
+COPY --from=builder /app/${appPath}/package.json /app/package.json
+${nodeModulesCopy}
+
+EXPOSE 3000
+CMD ["bun", "start"]
+`;
+}
+async function generateDockerfiles() {
+  const root = process.cwd();
+  const services = [];
+  for await (const service of serviceExplorer({})) {
+    services.push(service);
+  }
+  if (services.length === 0) {
+    throw new Error(`No service.yaml files found under "${resolve3(root, "packages")}".`);
+  }
+  const selected = apps.length ? services.filter((service) => apps.includes(service.name) || apps.includes(basename3(service.path))) : services;
+  const unmatchedApps = apps.filter((app) => !services.some((service) => app === service.name || app === basename3(service.path)));
+  if (unmatchedApps.length > 0) {
+    throw new Error(`Unknown app(s): ${unmatchedApps.join(", ")}.`);
+  }
+  for (const service of selected) {
+    const appDirectory = service.path;
+    const appPath = relative(root, appDirectory).replaceAll("\\", "/");
+    const paths = service.paths ?? [];
+    const dependencyPaths = [...new Set(paths.map((path) => packagePath(path, root, appDirectory)))].filter((path) => path !== appPath);
+    await Bun.write(resolve3(appDirectory, "Dockerfile"), renderDockerfile(appPath, dependencyPaths, service.family));
+  }
+}
+var apps;
+var init_dockerfile = __esm(() => {
+  init_parser();
+  init_core();
+  init_serviceExplorer();
+  SyncTag("apps", "string", true);
+  apps = tag("apps", "a", "Service to generate a Dockerfile for (repeatable)") ?? [];
+});
+
+// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/compose.hp
+var exports_compose2 = {};
+__export(exports_compose2, {
   content: () => content,
   data: () => data,
   theme: () => theme
@@ -5996,163 +5948,8 @@ var content = `%app% %command% %arguments% {[options]|theme.tag.primary}
   {This creates a beauty help|theme.text}
    %tags%
 `, data, theme;
-var init_demo2 = __esm(() => {
+var init_compose2 = __esm(() => {
   data = {
-    arg: [
-      {
-        type: "number",
-        multiple: false,
-        compact: false,
-        name: "age",
-        args: []
-      }
-    ],
-    tag: [
-      {
-        type: "Income",
-        multiple: true,
-        compact: false,
-        name: "income",
-        alias: "i",
-        description: "team member",
-        args: [
-          "income",
-          "i",
-          "team member"
-        ]
-      },
-      {
-        type: "string",
-        multiple: false,
-        compact: false,
-        name: "demo",
-        alias: "d",
-        description: "team member",
-        args: [
-          "demo",
-          "d",
-          "team member"
-        ]
-      },
-      {
-        type: "boolean",
-        multiple: false,
-        compact: true,
-        name: "doit",
-        alias: "o",
-        description: "do something",
-        args: [
-          "do",
-          "o",
-          "do something"
-        ]
-      }
-    ],
-    command: "demo"
-  };
-  theme = {
-    arg: "green",
-    text: "white",
-    command: {
-      primary: "yellow",
-      secondary: "yellow"
-    },
-    tag: {
-      primary: "cyan",
-      secondary: "gray"
-    }
-  };
-});
-
-// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/dockerfile.hp
-var exports_dockerfile2 = {};
-__export(exports_dockerfile2, {
-  content: () => content2,
-  data: () => data2,
-  theme: () => theme2
-});
-var content2 = `%app% %command% %arguments% {[options]|theme.tag.primary}
-  {This creates a beauty help|theme.text}
-   %tags%
-`, data2, theme2;
-var init_dockerfile2 = __esm(() => {
-  data2 = {
-    arg: [],
-    tag: [
-      {
-        type: "string",
-        multiple: true,
-        compact: false,
-        name: "apps",
-        alias: "a",
-        description: "Service to generate a Dockerfile for (repeatable)",
-        args: [
-          "apps",
-          "a",
-          "Service to generate a Dockerfile for (repeatable)"
-        ]
-      }
-    ],
-    command: "dockerfile"
-  };
-  theme2 = {
-    arg: "green",
-    text: "white",
-    command: {
-      primary: "yellow",
-      secondary: "yellow"
-    },
-    tag: {
-      primary: "cyan",
-      secondary: "gray"
-    }
-  };
-});
-
-// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/doit.hp
-var exports_doit2 = {};
-__export(exports_doit2, {
-  content: () => content3,
-  data: () => data3,
-  theme: () => theme3
-});
-var content3 = `%app% %command% %arguments% {[options]|theme.tag.primary}
-  {This creates a beauty help|theme.text}
-   %tags%
-`, data3, theme3;
-var init_doit = __esm(() => {
-  data3 = {
-    arg: [],
-    tag: [],
-    command: "doit"
-  };
-  theme3 = {
-    arg: "green",
-    text: "white",
-    command: {
-      primary: "yellow",
-      secondary: "yellow"
-    },
-    tag: {
-      primary: "cyan",
-      secondary: "gray"
-    }
-  };
-});
-
-// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/gen.hp
-var exports_gen2 = {};
-__export(exports_gen2, {
-  content: () => content4,
-  data: () => data4,
-  theme: () => theme4
-});
-var content4 = `%app% %command% %arguments% {[options]|theme.tag.primary}
-  {This creates a beauty help|theme.text}
-   %tags%
-`, data4, theme4;
-var init_gen2 = __esm(() => {
-  data4 = {
     arg: [],
     tag: [
       {
@@ -6250,9 +6047,54 @@ var init_gen2 = __esm(() => {
         ]
       }
     ],
-    command: "gen"
+    command: "compose"
   };
-  theme4 = {
+  theme = {
+    arg: "green",
+    text: "white",
+    command: {
+      primary: "yellow",
+      secondary: "yellow"
+    },
+    tag: {
+      primary: "cyan",
+      secondary: "gray"
+    }
+  };
+});
+
+// help:help:/@gerard2perez/bitsun/packages/stacksmith/cli/dockerfile.hp
+var exports_dockerfile2 = {};
+__export(exports_dockerfile2, {
+  content: () => content2,
+  data: () => data2,
+  theme: () => theme2
+});
+var content2 = `%app% %command% %arguments% {[options]|theme.tag.primary}
+  {This creates a beauty help|theme.text}
+   %tags%
+`, data2, theme2;
+var init_dockerfile2 = __esm(() => {
+  data2 = {
+    arg: [],
+    tag: [
+      {
+        type: "string",
+        multiple: true,
+        compact: false,
+        name: "apps",
+        alias: "a",
+        description: "Service to generate a Dockerfile for (repeatable)",
+        args: [
+          "apps",
+          "a",
+          "Service to generate a Dockerfile for (repeatable)"
+        ]
+      }
+    ],
+    command: "dockerfile"
+  };
+  theme2 = {
     arg: "green",
     text: "white",
     command: {
@@ -6272,23 +6114,17 @@ async function cmder() {
     throw new Error(" A command is required");
   }
   const commands = [
-    "demo",
-    "dockerfile",
-    "doit",
-    "gen"
+    "compose",
+    "dockerfile"
   ];
   if (!help && !commands.includes(command)) {
     throw new Error(`A command named '${command}' does not exits`);
   }
   const originalScope = {
-    ["demo"]: async () => Promise.resolve().then(() => (init_demo(), exports_demo)),
+    ["compose"]: async () => Promise.resolve().then(() => (init_compose(), exports_compose)),
     ["dockerfile"]: async () => Promise.resolve().then(() => (init_dockerfile(), exports_dockerfile)),
-    ["doit"]: async () => Promise.resolve().then(() => exports_doit),
-    ["gen"]: async () => Promise.resolve().then(() => (init_gen(), exports_gen)),
-    ["demo.hp"]: async () => Promise.resolve().then(() => (init_demo2(), exports_demo2)),
-    ["dockerfile.hp"]: async () => Promise.resolve().then(() => (init_dockerfile2(), exports_dockerfile2)),
-    ["doit.hp"]: async () => Promise.resolve().then(() => (init_doit(), exports_doit2)),
-    ["gen.hp"]: async () => Promise.resolve().then(() => (init_gen2(), exports_gen2))
+    ["compose.hp"]: async () => Promise.resolve().then(() => (init_compose2(), exports_compose2)),
+    ["dockerfile.hp"]: async () => Promise.resolve().then(() => (init_dockerfile2(), exports_dockerfile2))
   };
   const cmd = originalScope[help ? `${command}.hp` : command];
   if (!cmd && help) {
