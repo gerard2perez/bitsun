@@ -54,7 +54,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        bunx stacksmith dockerfile
+        bunx @gerard2perez/stacksmith dockerfile
 
     - name: Build temporary E2E image
       if: steps.image.outputs.should_build == 'true'
