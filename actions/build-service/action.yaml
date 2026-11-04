@@ -12,6 +12,7 @@ inputs:
 runs:
   using: composite
   steps:
+    - uses: gerard2perez/bitsun/actions/setup-env@main
     - uses: actions/checkout@v7
 
     - name: Detect changes
