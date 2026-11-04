@@ -102,6 +102,13 @@ runs:
       shell: bash
       run: PLAYWRIGHT_JSON_OUTPUT_NAME=results.json bunx playwright test --reporter=json,html,list
 
+    - name: Debug
+      if: failure()
+      shell: bash
+      run: |
+        echo "=== Docker Logs ==="
+        docker compose -f compose.e2e.yaml logs
+
     - name: Upload E2E report
       if: always()
       uses: appleboy/scp-action@v1
@@ -120,9 +127,9 @@ runs:
       with:
         report-file: results.json
         report-url: 'https://pw.stage.${{ env.HOSTNAME }}/pr-${{ github.event.pull_request.number }}/${{ github.sha }}'
-        test-command: 'npx playwright test --'
+        test-command: 'npx playwright test'
         job-summary: true
-        create-comment: false
+        create-comment: true
 
     - uses: marocchino/sticky-pull-request-comment@v3
       with:
